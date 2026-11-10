@@ -1,0 +1,226 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Minecraft Server RAM Calculator (Modded, Paper, Vanilla) + JVM Flags</title>
+<meta name="description" content="Free calculator: find out how much RAM your Minecraft server needs for your modpack, mods, plugins and player count. Get ready-to-paste JVM startup flags.">
+<meta name="robots" content="index, follow">
+<!-- After you have a domain/URL, put it here: -->
+<!-- <link rel="canonical" href="https://YOURNAME.github.io/minecraft-ram-calculator/"> -->
+
+<!-- STEP 2 (later): paste your Google AdSense <script> tag here once approved -->
+
+<style>
+:root{
+  --bg:#f6f7f4; --card:#ffffff; --ink:#1d2320; --muted:#5d6862; --line:#dfe4df;
+  --accent:#2f8f4e; --accent-ink:#ffffff; --accent-soft:#e3f2e8; --code:#f0f2ef;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#121614; --card:#1b201d; --ink:#e7ece8; --muted:#9aa59e; --line:#2c332f;
+    --accent:#4cb36b; --accent-ink:#0d130f; --accent-soft:#1f3326; --code:#151a17;
+  }
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.6 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+.wrap{max-width:860px;margin:0 auto;padding:24px 16px 48px}
+h1{font-size:clamp(1.6rem,4vw,2.2rem);line-height:1.2;margin:8px 0 6px}
+h2{font-size:1.3rem;margin:36px 0 10px}
+h3{font-size:1.05rem;margin:20px 0 4px}
+p.lead{color:var(--muted);margin:0 0 20px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:20px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media (max-width:620px){.grid{grid-template-columns:1fr}}
+label{display:block;font-weight:600;font-size:.92rem;margin-bottom:6px}
+.hint{font-weight:400;color:var(--muted);font-size:.85rem}
+select,input[type=number]{width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink);font:inherit}
+input[type=range]{width:100%;accent-color:var(--accent)}
+.rangeval{float:right;font-weight:700;color:var(--accent)}
+.check{display:flex;gap:8px;align-items:center;font-weight:400}
+.result{margin-top:20px;background:var(--accent-soft);border-radius:12px;padding:20px;text-align:center}
+.big{font-size:3rem;font-weight:800;line-height:1;color:var(--accent)}
+.sub{color:var(--muted);margin-top:6px}
+.breakdown{margin:14px auto 0;max-width:420px;text-align:left;font-size:.92rem}
+.breakdown div{display:flex;justify-content:space-between;border-bottom:1px dashed var(--line);padding:3px 0}
+pre{background:var(--code);border:1px solid var(--line);border-radius:8px;padding:12px;white-space:pre-wrap;word-break:break-all;font-size:.82rem;margin:8px 0}
+button{background:var(--accent);color:var(--accent-ink);border:0;border-radius:8px;padding:10px 16px;font:inherit;font-weight:700;cursor:pointer}
+button:hover{filter:brightness(1.08)}
+.hosts{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-top:10px}
+.host{border:1px solid var(--line);border-radius:10px;padding:14px;background:var(--card)}
+.host strong{display:block}
+.host a{display:inline-block;margin-top:8px;background:var(--accent);color:var(--accent-ink);padding:8px 12px;border-radius:8px;text-decoration:none;font-weight:700;font-size:.9rem}
+.disclosure{font-size:.8rem;color:var(--muted);margin-top:8px}
+.ad{margin:24px 0;min-height:90px;border:1px dashed var(--line);border-radius:8px;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:.8rem}
+table{width:100%;border-collapse:collapse;font-size:.92rem}
+th,td{border-bottom:1px solid var(--line);padding:8px;text-align:left}
+footer{margin-top:40px;color:var(--muted);font-size:.85rem;border-top:1px solid var(--line);padding-top:16px}
+a{color:var(--accent)}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<h1>Minecraft Server RAM Calculator</h1>
+<p class="lead">Find out how much RAM your server needs for modpacks, plugins and players. You also get JVM startup flags you can copy straight into your start script.</p>
+
+<div class="card">
+  <div class="grid">
+    <div>
+      <label for="type">Server type</label>
+      <select id="type">
+        <option value="vanilla">Vanilla</option>
+        <option value="paper">Paper / Spigot / Purpur (plugins)</option>
+        <option value="fabric">Fabric / Quilt (mods)</option>
+        <option value="forge" selected>Forge / NeoForge (modpack)</option>
+      </select>
+    </div>
+    <div id="modsBox">
+      <label for="mods">Number of mods <span class="hint">(check your mods folder)</span></label>
+      <input id="mods" type="number" min="0" max="1000" value="150">
+    </div>
+    <div id="pluginsBox" hidden>
+      <label for="plugins">Number of plugins</label>
+      <input id="plugins" type="number" min="0" max="500" value="20">
+    </div>
+    <div>
+      <label for="players">Players online at once <span class="rangeval" id="playersVal"></span></label>
+      <input id="players" type="range" min="1" max="100" value="6">
+    </div>
+    <div>
+      <label for="vd">View distance (chunks) <span class="rangeval" id="vdVal"></span></label>
+      <input id="vd" type="range" min="4" max="32" value="10">
+    </div>
+    <div>
+      <label class="check"><input id="perf" type="checkbox"> I use performance mods/plugins (e.g. FerriteCore, ModernFix, Lithium)</label>
+    </div>
+    <div>
+      <label class="check"><input id="heavy" type="checkbox"> Big tech/automation builds or lots of loaded farms</label>
+    </div>
+  </div>
+
+  <div class="result" aria-live="polite">
+    <div class="big" id="ram">–</div>
+    <div class="sub">Recommended RAM to give the server (-Xmx)</div>
+    <div class="sub" id="plan"></div>
+    <div class="breakdown" id="breakdown"></div>
+  </div>
+</div>
+
+<div class="ad" id="ad-top"><!-- Ad slot: paste an AdSense ad unit here -->Advertisement</div>
+
+<h2>Your JVM startup flags</h2>
+<p>These are Aikar's flags, the most widely used G1GC tuning for Minecraft, set to your RAM. Paste them into your <code>start.bat</code>/<code>start.sh</code> or your host panel's "JVM arguments" field.</p>
+<pre id="flags"></pre>
+<button id="copy">Copy flags</button>
+
+<h2>Recommended hosting for your server</h2>
+<p id="hostIntro">Don't want to run it on your own PC? These hosts sell plans in the size you need.</p>
+<div class="hosts" id="hosts"></div>
+<p class="disclosure">Disclosure: some links on this page are affiliate links. If you buy through them, this site may earn a commission at no extra cost to you.</p>
+
+<h2>How much RAM does a Minecraft server need?</h2>
+<table>
+  <tr><th>Server</th><th>Players</th><th>Typical RAM</th></tr>
+  <tr><td>Vanilla / Paper</td><td>1–5</td><td>2–3 GB</td></tr>
+  <tr><td>Vanilla / Paper</td><td>10–30</td><td>4–6 GB</td></tr>
+  <tr><td>Light modpack (&lt;75 mods)</td><td>1–8</td><td>4–6 GB</td></tr>
+  <tr><td>Medium modpack (75–200 mods)</td><td>1–10</td><td>6–8 GB</td></tr>
+  <tr><td>Large modpack (200+ mods, e.g. ATM-style kitchen sink)</td><td>1–10</td><td>8–12 GB</td></tr>
+  <tr><td>Large modpack</td><td>15+</td><td>12–16 GB</td></tr>
+</table>
+
+<h3>Is more RAM always better?</h3>
+<p>No. Giving a server far more RAM than it needs can cause longer garbage-collection pauses. Use about what the calculator recommends, and look at CPU speed if you still get lag.</p>
+<h3>Why does my server lag even with enough RAM?</h3>
+<p>Minecraft runs its main game loop on one CPU thread, so single-core CPU speed matters a lot. Lowering view distance, pre-generating your world (with Chunky) and adding performance mods often help more than extra RAM.</p>
+<h3>How much RAM do I need if I host on my own PC?</h3>
+<p>Leave at least 2–4 GB free for your operating system and the game client. For example, if the calculator says 8 GB and you also play on that same PC, 16 GB of total system RAM is more comfortable.</p>
+<h3>Should -Xms and -Xmx be the same?</h3>
+<p>Yes. For a dedicated server, set both to the same value (Aikar's flags do this) so the JVM doesn't waste time resizing the heap.</p>
+<h3>How many mods can 8 GB handle?</h3>
+<p>Usually about 150–250 mods for a small group of friends, depending on the mods. Tech and worldgen mods use more memory than small utility mods.</p>
+
+<div class="ad" id="ad-bottom"><!-- Ad slot: paste an AdSense ad unit here -->Advertisement</div>
+
+<footer>
+  Estimates are a starting point. Real usage depends on mods, world size and builds, so check your server's memory use after a few days.<br>
+  Not affiliated with Mojang or Microsoft. &copy; <span id="yr"></span>
+</footer>
+</div>
+
+<script>
+/* ===== EDIT THESE: your affiliate links (sign up for each host's affiliate/partner program) ===== */
+const HOSTS = [
+  { name: "Host #1",  note: "Good for modpacks, one-click installs", url: "https://example.com/YOUR_AFFILIATE_LINK_1" },
+  { name: "Host #2",  note: "Budget-friendly small servers",         url: "https://example.com/YOUR_AFFILIATE_LINK_2" },
+  { name: "Host #3",  note: "High-performance CPUs",                 url: "https://example.com/YOUR_AFFILIATE_LINK_3" },
+];
+/* =============================================================================================== */
+
+const $ = id => document.getElementById(id);
+const els = ["type","mods","plugins","players","vd","perf","heavy"].map($);
+
+function calc(){
+  const type = $("type").value;
+  const mods = Math.max(0, +$("mods").value || 0);
+  const plugins = Math.max(0, +$("plugins").value || 0);
+  const players = +$("players").value;
+  const vd = +$("vd").value;
+  const perf = $("perf").checked, heavy = $("heavy").checked;
+  const modded = type === "fabric" || type === "forge";
+
+  $("modsBox").hidden = !modded;
+  $("pluginsBox").hidden = type !== "paper";
+  $("playersVal").textContent = players;
+  $("vdVal").textContent = vd;
+
+  const base = {vanilla:1.5, paper:1.5, fabric:2, forge:3}[type];
+  const perMod = type === "forge" ? 0.03 : 0.02;           // GB per mod
+  const modGB = modded ? mods * perMod : 0;
+  const pluginGB = type === "paper" ? plugins * 0.02 : 0;
+  const perPlayer = modded ? 0.2 : 0.1;                     // GB per player
+  const vdFactor = Math.max(0.6, 1 + (vd - 10) * 0.06);     // view distance scales chunk memory
+  const playerGB = players * perPlayer * vdFactor;
+  let total = base + modGB + pluginGB + playerGB;
+  if (heavy) total *= 1.15;
+  if (perf && modded) total *= 0.88;
+  total = Math.max(2, Math.ceil(total * 2) / 2);            // round up to 0.5 GB, min 2 GB
+  total = Math.min(total, 32);
+  const xmx = Math.ceil(total);                             // whole GB for flags
+
+  $("ram").textContent = total + " GB";
+  const plan = Math.ceil(total + 1);
+  $("plan").textContent = `Buying hosting? Choose a plan with at least ${plan} GB. Hosts count some overhead on top of the Java heap.`;
+
+  const rows = [["Base server", base]];
+  if (modded) rows.push([`${mods} mods`, modGB]);
+  if (type === "paper") rows.push([`${plugins} plugins`, pluginGB]);
+  rows.push([`${players} players @ ${vd} view distance`, playerGB]);
+  if (heavy) rows.push(["Heavy builds (+15%)", null]);
+  if (perf && modded) rows.push(["Performance mods (−12%)", null]);
+  $("breakdown").innerHTML = rows.map(([k,v]) =>
+    `<div><span>${k}</span><span>${v===null?"":v.toFixed(1)+" GB"}</span></div>`).join("");
+
+  const big = xmx >= 12;
+  $("flags").textContent =
+`java -Xms${xmx}G -Xmx${xmx}G -XX:+UseG1GC -XX:+ParallelRefProcEnabled -XX:MaxGCPauseMillis=200 -XX:+UnlockExperimentalVMOptions -XX:+DisableExplicitGC -XX:+AlwaysPreTouch -XX:G1NewSizePercent=${big?40:30} -XX:G1MaxNewSizePercent=${big?50:40} -XX:G1HeapRegionSize=${big?16:8}M -XX:G1ReservePercent=${big?15:20} -XX:G1HeapWastePercent=5 -XX:G1MixedGCCountTarget=4 -XX:InitiatingHeapOccupancyPercent=${big?20:15} -XX:G1MixedGCLiveThresholdPercent=90 -XX:G1RSetUpdatingPauseIntervalMillis=5000 -XX:SurvivorRatio=32 -XX:+PerfDisableSharedMem -XX:MaxTenuringThreshold=1 -Dusing.aikars.flags=https://mcflags.emc.gs -Daikars.new.flags=true -jar server.jar nogui`;
+
+  $("hostIntro").textContent = `Don't want to run it on your own PC? Look for a ${plan} GB+ plan from one of these hosts:`;
+}
+
+$("hosts").innerHTML = HOSTS.map(h =>
+  `<div class="host"><strong>${h.name}</strong><span class="hint">${h.note}</span><br>
+   <a href="${h.url}" target="_blank" rel="sponsored noopener">See plans →</a></div>`).join("");
+
+els.forEach(e => e.addEventListener("input", calc));
+$("copy").addEventListener("click", async () => {
+  try { await navigator.clipboard.writeText($("flags").textContent); $("copy").textContent = "Copied!"; }
+  catch { $("copy").textContent = "Select and copy manually"; }
+  setTimeout(() => $("copy").textContent = "Copy flags", 1800);
+});
+$("yr").textContent = new Date().getFullYear();
+calc();
+</script>
+</body>
+</html>
